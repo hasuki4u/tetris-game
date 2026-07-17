@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#090b16">
+  <title>NEON STACK — 俄罗斯方块</title>
+  <style>
+    :root{--bg:#090b16;--panel:#12162a;--line:#252c4b;--text:#f4f7ff;--muted:#8d96b8;--cyan:#42e8e0;--pink:#ff5f91;--yellow:#ffd166}
+    *{box-sizing:border-box}body{margin:0;min-height:100svh;color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;background:radial-gradient(circle at 20% 0,#202454 0,transparent 36%),radial-gradient(circle at 90% 85%,#301333 0,transparent 30%),var(--bg);display:grid;place-items:center;padding:20px;overflow-x:hidden}
+    body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;background-image:linear-gradient(#fff1 1px,transparent 1px),linear-gradient(90deg,#fff1 1px,transparent 1px);background-size:32px 32px;mask-image:linear-gradient(to bottom,#000,transparent)}
+    .shell{width:min(960px,100%);display:grid;grid-template-columns:220px minmax(260px,360px) 220px;gap:22px;align-items:center;position:relative}
+    .brand{align-self:start}.eyebrow{color:var(--cyan);font-size:12px;letter-spacing:.24em;font-weight:800}.brand h1{font-size:clamp(34px,5vw,64px);line-height:.85;margin:12px 0 18px;letter-spacing:-.07em}.brand h1 span{display:block;color:transparent;-webkit-text-stroke:1px #8e96bb}.brand p{color:var(--muted);line-height:1.6;font-size:14px;margin:0}
+    .card{background:color-mix(in srgb,var(--panel) 82%,transparent);border:1px solid var(--line);border-radius:20px;box-shadow:0 24px 80px #0008,inset 0 1px #fff0d;backdrop-filter:blur(12px)}
+    .game-wrap{padding:12px;position:relative}.game-wrap:after{content:"";position:absolute;inset:-1px;border-radius:20px;pointer-events:none;background:linear-gradient(135deg,#42e8e044,transparent 35%,#ff5f9133);mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude;padding:1px}
+    canvas{display:block;width:100%;height:auto;border-radius:12px;background:#080a13;image-rendering:pixelated}.overlay{position:absolute;inset:12px;display:grid;place-items:center;border-radius:12px;background:#080a13d9;text-align:center;padding:30px;transition:.2s}.overlay[hidden]{display:none}.overlay h2{font-size:34px;margin:0 0 8px}.overlay p{color:var(--muted);margin:0 0 20px}.primary{border:0;border-radius:999px;background:var(--cyan);color:#071312;font-weight:900;padding:13px 24px;cursor:pointer;box-shadow:0 0 30px #42e8e055}.primary:hover{transform:translateY(-1px)}
+    .side{display:grid;gap:14px}.stat{padding:17px}.label{font-size:11px;color:var(--muted);letter-spacing:.18em;text-transform:uppercase}.value{font-size:28px;font-weight:850;margin-top:5px;font-variant-numeric:tabular-nums}.next{padding:16px}.next canvas{width:100%;max-width:130px;margin:8px auto 0;background:transparent}.controls{padding:16px;color:var(--muted);font-size:12px;line-height:1.9}.controls b{color:var(--text);font-weight:700}.mobile-controls{display:none;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:12px}.mobile-controls button{min-height:48px;border:1px solid var(--line);border-radius:12px;background:#151a32;color:var(--text);font-size:20px;touch-action:manipulation}.footer{position:fixed;bottom:10px;color:#717a9e;font-size:10px;letter-spacing:.12em}
+    @media(max-width:760px){body{padding:12px 12px 28px}.shell{grid-template-columns:minmax(260px,350px);justify-content:center;gap:12px}.brand{display:flex;align-items:end;justify-content:space-between}.brand h1{font-size:36px;margin:8px 0 0}.brand h1 span{display:inline;margin-left:8px}.brand p{display:none}.side{grid-template-columns:repeat(3,1fr);gap:8px;order:2}.stat{padding:11px}.value{font-size:20px}.next,.controls{display:none}.mobile-controls{display:grid}.footer{display:none}}
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="brand"><div><div class="eyebrow">ARCADE / 01</div><h1>NEON <span>STACK</span></h1></div><p>把混乱整理成秩序。<br>消除方块，保持节奏。</p></section>
+    <section><div class="card game-wrap"><canvas id="game" width="300" height="600" aria-label="俄罗斯方块游戏区域"></canvas><div class="overlay" id="overlay"><div><h2 id="overlayTitle">准备好了吗？</h2><p id="overlayText">按 Enter 或点击开始</p><button class="primary" id="start">开始游戏</button></div></div></div><div class="mobile-controls" aria-label="触屏控制"><button data-action="left">←</button><button data-action="rotate">↻</button><button data-action="down">↓</button><button data-action="right">→</button><button data-action="drop">⇣</button></div></section>
+    <aside class="side"><div class="card stat"><div class="label">Score</div><div class="value" id="score">0</div></div><div class="card stat"><div class="label">Level</div><div class="value" id="level">1</div></div><div class="card stat"><div class="label">Best</div><div class="value" id="best">0</div></div><div class="card next"><div class="label">Next piece</div><canvas id="next" width="120" height="100"></canvas></div><div class="card controls"><div><b>← →</b> 移动</div><div><b>↑ / X</b> 旋转</div><div><b>↓</b> 加速下落</div><div><b>Space</b> 瞬间落下</div><div><b>P</b> 暂停</div></div></aside>
+  </main><div class="footer">BUILT FOR FOCUS · NO ADS · SAVES LOCALLY</div>
+  <script>
+    const COLS=10,ROWS=20,SIZE=30,colors=['','#42e8e0','#ffd166','#9b7bff','#5ba8ff','#ff9f43','#67e480','#ff5f91'];
+    const shapes={I:[[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]],O:[[2,2],[2,2]],T:[[0,3,0],[3,3,3],[0,0,0]],J:[[4,0,0],[4,4,4],[0,0,0]],L:[[0,0,5],[5,5,5],[0,0,0]],S:[[0,6,6],[6,6,0],[0,0,0]],Z:[[7,7,0],[0,7,7],[0,0,0]]};
+    const bagKeys=Object.keys(shapes),canvas=document.querySelector('#game'),ctx=canvas.getContext('2d'),nextCtx=document.querySelector('#next').getContext('2d');let board,piece,nextPiece,bag,score,level,lines,dropAt,last=0,running=false,paused=false,raf;
+    const $=s=>document.querySelector(s),clone=m=>m.map(r=>[...r]);
+    function reset(){board=Array.from({length:ROWS},()=>Array(COLS).fill(0));bag=[];score=0;level=1;lines=0;nextPiece=makePiece();spawn();updateStats();}
+    function makePiece(){if(!bag.length)bag=[...bagKeys].sort(()=>Math.random()-.5);const key=bag.pop();return{matrix:clone(shapes[key]),x:0,y:0,key};}
+    function spawn(){piece=nextPiece||makePiece();nextPiece=makePiece();piece.x=Math.floor((COLS-piece.matrix[0].length)/2);piece.y=-1;if(collides(piece.matrix,piece.x,piece.y)){endGame();return}drawNext();}
+    function collides(matrix,x,y){for(let r=0;r<matrix.length;r++)for(let c=0;c<matrix[r].length;c++)if(matrix[r][c]){const bx=x+c,by=y+r;if(bx<0||bx>=COLS||by>=ROWS||(by>=0&&board[by][bx]))return true}return false}
+    function merge(){piece.matrix.forEach((row,r)=>row.forEach((v,c)=>{if(v&&piece.y+r>=0)board[piece.y+r][piece.x+c]=v}));clearLines();spawn();}
+    function clearLines(){let n=0;for(let r=ROWS-1;r>=0;r--)if(board[r].every(Boolean)){board.splice(r,1);board.unshift(Array(COLS).fill(0));n++;r++}if(n){lines+=n;score+=[0,100,300,500,800][n]*level;level=Math.floor(lines/10)+1;updateStats();}}
+    function move(dx){if(!running||paused)return;if(!collides(piece.matrix,piece.x+dx,piece.y))piece.x+=dx;draw();}
+    function down(manual=false){if(!running||paused)return;if(!collides(piece.matrix,piece.x,piece.y+1)){piece.y++;if(manual){score++;updateStats()}}else merge();dropAt=performance.now();draw();}
+    function rotate(){if(!running||paused)return;const m=piece.matrix[0].map((_,i)=>piece.matrix.map(r=>r[i]).reverse());for(const kick of [0,-1,1,-2,2])if(!collides(m,piece.x+kick,piece.y)){piece.matrix=m;piece.x+=kick;break}draw();}
+    function hardDrop(){if(!running||paused)return;let d=0;while(!collides(piece.matrix,piece.x,piece.y+1)){piece.y++;d++}score+=d*2;updateStats();merge();draw();}
+    function ghostY(){let y=piece.y;while(!collides(piece.matrix,piece.x,y+1))y++;return y}
+    function cell(context,x,y,color,alpha=1,size=SIZE){context.globalAlpha=alpha;context.fillStyle=color;context.fillRect(x*size+1,y*size+1,size-2,size-2);context.fillStyle='#fff3';context.fillRect(x*size+3,y*size+3,size-6,3);context.globalAlpha=1}
+    function draw(){ctx.clearRect(0,0,canvas.width,canvas.height);ctx.strokeStyle='#171b2e';ctx.lineWidth=1;for(let x=0;x<=COLS;x++){ctx.beginPath();ctx.moveTo(x*SIZE,0);ctx.lineTo(x*SIZE,600);ctx.stroke()}for(let y=0;y<=ROWS;y++){ctx.beginPath();ctx.moveTo(0,y*SIZE);ctx.lineTo(300,y*SIZE);ctx.stroke()}board.forEach((row,y)=>row.forEach((v,x)=>v&&cell(ctx,x,y,colors[v])));if(piece&&running){const gy=ghostY();piece.matrix.forEach((row,r)=>row.forEach((v,c)=>{if(v&&gy+r>=0)cell(ctx,piece.x+c,gy+r,colors[v],.16)}));piece.matrix.forEach((row,r)=>row.forEach((v,c)=>{if(v&&piece.y+r>=0)cell(ctx,piece.x+c,piece.y+r,colors[v])}))}}
+    function drawNext(){nextCtx.clearRect(0,0,120,100);const m=nextPiece.matrix,s=22,ox=(120-m[0].length*s)/2/s,oy=(100-m.length*s)/2/s;m.forEach((row,r)=>row.forEach((v,c)=>v&&cell(nextCtx,ox+c,oy+r,colors[v],1,s)))}
+    function updateStats(){scoreEl.textContent=score.toLocaleString();levelEl.textContent=level;const best=Math.max(score,+(localStorage.neonStackBest||0));bestEl.textContent=best.toLocaleString();localStorage.neonStackBest=best;}
+    const scoreEl=$('#score'),levelEl=$('#level'),bestEl=$('#best'),overlay=$('#overlay');
+    function begin(){reset();running=true;paused=false;overlay.hidden=true;dropAt=performance.now();last=0;cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);draw();}
+    function endGame(){running=false;$('#overlayTitle').textContent='游戏结束';$('#overlayText').textContent=`本局得分 ${score.toLocaleString()}`;$('#start').textContent='再来一局';overlay.hidden=false;updateStats();}
+    function togglePause(){if(!running)return;paused=!paused;$('#overlayTitle').textContent='已暂停';$('#overlayText').textContent='按 P 继续';$('#start').textContent='继续游戏';overlay.hidden=!paused;if(!paused){dropAt=performance.now();raf=requestAnimationFrame(loop)}}
+    function loop(t){if(!running||paused)return;last=t;const interval=Math.max(90,850-(level-1)*65);if(t-dropAt>interval)down();draw();raf=requestAnimationFrame(loop)}
+    document.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight','ArrowDown','ArrowUp',' '].includes(e.key))e.preventDefault();if(e.key==='Enter'&&!running)return begin();if(e.key.toLowerCase()==='p')return togglePause();if(e.key==='ArrowLeft')move(-1);if(e.key==='ArrowRight')move(1);if(e.key==='ArrowDown')down(true);if(e.key==='ArrowUp'||e.key.toLowerCase()==='x')rotate();if(e.key===' ')hardDrop()});
+    $('#start').addEventListener('click',()=>paused?togglePause():begin());document.querySelectorAll('[data-action]').forEach(b=>b.addEventListener('pointerdown',()=>({left:()=>move(-1),right:()=>move(1),down:()=>down(true),rotate,drop:hardDrop}[b.dataset.action]())));bestEl.textContent=(+localStorage.neonStackBest||0).toLocaleString();reset();draw();
+  </script>
+</body>
+</html>
